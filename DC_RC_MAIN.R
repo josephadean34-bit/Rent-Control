@@ -1,5 +1,4 @@
 ####Library######
-install.packages("factoextra")
 library(tidyverse)
 library(tidygeocoder)
 library(fuzzyjoin)
@@ -8,6 +7,7 @@ library(lme4)
 library(lfe)
 library(plm)
 library(clipr)
+library(stringr)
 library(stargazer)
 library(rstatix)
 library(openxlsx)
@@ -504,6 +504,12 @@ df <- ALTOS %>%
   mutate(street_address = toupper(street_address),
          ID = row_number())
 
+df <- AIRBNB %>%
+  mutate(street_address = toupper(formatted_address),
+         ID = row_number())
+
+ADDY <- df$street_address
+ADDY <- trimws(ADDY)
 ADDY <- df$street_address
 ADDY <- trimws(ADDY)
 
@@ -590,7 +596,7 @@ t3 <- t1 %>%
   rename(X = geo_lat,
          Y = geo_long)
 
-
+RC$ADD
 # merging separately by property type
 ALTOS_MULTI <- inner_join(t1, RC135, by = "ADDY") 
 ALTOS_CONDO <- inner_join(t3, RC26, by = c("ADDY", "UNITNUMBER"), relationship = 'one-to-one', keep = FALSE)
@@ -1860,29 +1866,66 @@ A %>%
 ################Real-Page###################
 RC <- read.csv("Rent_Control.csv")
 RP <- read.csv("RealPage.csv")
-RP <- as.vector(RP)
+RP <- as.matrix(RP)
 
+as.matrix()
 
-LL <- RC %>%
-  distinct(OWNERNAME_MASTER)
-
-write.csv(LL, "Landlords.csv")
-
-LL <- RC %>%
-  filter(OWNERNAME_MASTER %in% RP & PROPERTY_TYPE_GROUPING == 1) %>%
+LL <- RC3 %>%
+  #filter(YEAR == 2023) %>%
+  filter(PROPERTY_TYPE_GROUPING == 1) %>%
+  #filter(RENT_CONTROLLED == 1) %>%
   group_by(OWNERNAME_MASTER) %>%
-  mutate(Total_Units1 = sum(if_else(RENTAL == 1, UNITS_MASTER, 0), na.rm = TRUE)) %>%
+  mutate(Total_Units1 = sum(if_else(RENTAL == 1, BuildingUnits, 0), na.rm = TRUE)) %>%
   ungroup()%>% 
   group_by(Total_Units1) %>%
   distinct(OWNERNAME_MASTER) %>%
   arrange(desc(Total_Units1)) %>%
   select(OWNERNAME_MASTER, Total_Units1)
 
+
+LL <- RC3 %>%
+  filter(YEAR == 2023) %>%
+  filter(PROPERTY_TYPE_GROUPING == 1) %>%
+  filter(RENT_CONTROLLED == 0) %>%
+  group_by(OWNERNAME_MASTER) %>%
+  summarise(n())
+
 write.csv(LL, "RP.csv")
 test<- RC %>%
   select(OWNERNAME_MASTER, PREMISEADD)
 
 #######New RC Altos########
+
+AIRBNB <- read.csv("airbnb_dc_addresses_only.csv")
+
+AIRBNB <- t1 %>%
+  mutate(formatted_address = toupper(formatted_address),
+         ADDY = sub("^(.*?(NW|NE|SW|SE)).*$", "\\1", formatted_address),
+         CITY = "Washington",
+         STATE = "DC",
+         ZIP = str_extract(formatted_address, "\\d{5}(?=, USA)")) %>%
+  select(ADDY, CITY, STATE, ZIP) %>%
+  group_by(ADDY) %>%
+  summarise(CITY = first(CITY),
+            STATE = first(STATE),
+            ZIP = first(ZIP))
+
+
+write.csv(AIRBNB, "AIRBNB_ADDRESSES.csv")
+
+RC1 <- RC %>%
+  filter(PROPERTY_TYPE_GROUPING == 1) %>%
+  distinct(ADDY, .keep_all = TRUE)
+
+
+
+test <- inner_join(AIRBNB, RC1,  by = "ADDY")
+test <- inner_join()
+test1 <- inner_join(test, t1, by = "ADDY")
+
+test %>%
+  group_by(PROPERTY_TYPE_NAME) %>%
+  summarise(n())
 
 library(Microsoft365R)
 library(readxl)
@@ -2031,6 +2074,81 @@ options(scipen = 999)
 rstatix::identify_outliers()
 mutate(outlier_var = (var < quantile(var, 0.25, na.rm = TRUE) - 1.5 * IQR(var, na.rm = TRUE)) |
          (var > quantile(var, 0.75, na.rm = TRUE) + 1.5 * IQR(var, na.rm = TRUE)))
+
+RC2 <- read.csv("RC2.csv")
+
+RP <- read.csv("RealPage.csv")
+RP <- as.matrix(RP)
+
+OWNER <- RC %>%
+  filter(PROPERTY_TYPE_GROUPING == 1) %>%
+  group_by(OWNERNAME_MASTER) %>%
+  summarise(sum(UNITS_MASTER)
+            )
+
+A <- t1 %>%
+  mutate(LIU = case_when(
+    laundry_in_unit == "False" ~ 0,
+    laundry_in_unit == "True" ~ 1,
+    laundry_in_unit == 0 ~ 0,
+    laundry_in_unit == 1 ~ 1,
+    TRUE ~ 0
+    
+  ),
+  CA = case_when(
+    cats_allowed == "False" ~ 0,
+    cats_allowed == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  DA = case_when(
+    dogs_allowed == "False" ~ 0,
+    dogs_allowed == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  
+  POB = case_when(
+    patio_or_balcony == "False" ~ 0,
+    patio_or_balcony == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  
+  AC = case_when(
+    air_conditioning == "False" ~ 0,
+    air_conditioning == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  
+  POOL = case_when(
+    pool == "False" ~ 0,
+    pool == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  
+  FC  = case_when(
+    fitness_center == "False" ~ 0,
+    fitness_center == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  ONSP = case_when(
+    on_street_parking == "False" ~ 0,
+    on_street_parking == "True" ~ 1,
+    TRUE ~ 0
+  ),
+  
+  OFFSP = case_when(
+    off_street_parking == "False" ~ 0,
+    off_street_parking == "True" ~ 1,
+    TRUE ~ 0
+  )
+  )
+
+A <- A %>%
+  group_by(ADDY) %>%
+  summarise(gym = first(fitness_center),
+            pool = first(pool)
+  )
+
+
 RC3 <- RC2 %>%
   filter(beds %in% 0:3) %>%
   #filter(last_listing_price < 10000) %>%
@@ -2043,20 +2161,25 @@ RC3 <- RC2 %>%
          YEAR = year(DATE),
          AgeOfBuilding = if_else(YEAR_BUILT != 0 & !is.na(YEAR_BUILT), 2024-YEAR_BUILT, NA_real_, missing = NA_real_),
          ppsqf = if_else(is.na(sf) | sf == 0, NA_real_, last_listing_price/sf, missing = NA_real_),
-         investor = ifelse(grepl(paste(c("LLC", "LP", "INC", "L.P."), collapse = "|"), OWNERNAME_MASTER), 1, 0)) %>%
+         investor = ifelse(grepl(paste(c("LLC", "LP", "INC", "L.P."), collapse = "|"), OWNERNAME_MASTER), 1, 0),
+         RealPage = if_else(OWNERNAME_MASTER %in% RP, 1 ,0, missing = 0)) %>%
   filter(Outlier == 0) %>%
   rename(BuildingUnits = UNITS_MASTER,
-         SQFT = sf)
+         SQFT = sf) %>%
+  left_join(., A, by = "ADDY") %>%
+  left_join()
+
 
 #feols(last_listing_price ~ RENT_CONTROLLED + beds + sf + UNITS_MASTER + avg_weeks_per_episode | NBHD + YEAR, data = test1)
 #lm(last_listing_price ~ RENT_CONTROLLED + beds + sf + UNITS_MASTER + avg_weeks_per_episode + factor(NBHD) + factor(YEAR), data = test1)
-model <- felm(last_listing_price ~ RENT_CONTROLLED*BuildingUnits + RENT_CONTROLLED*factor(beds) + NATURALP +  SQFT + AgeOfBuilding | NBHDNAME + YEAR, data = RC3)
+model <- felm(log(last_listing_price) ~ RENT_CONTROLLED + BuildingUnits + RENT_CONTROLLED + factor(beds) +  SQFT + AgeOfBuilding + pool + gym | NBHD  + YEAR, data = RC3)
 summary(model)
+coef(model)["RENT_CONTROLLED"] # say = -0.08
 
 
 #model <- plm(last_listing_price ~ RENT_CONTROLLED*beds + SQFT + RENT_CONTROLLED*BuildingUnits + investor +  total_weeks_listed + YEAR_BUILT, data = RC3, index = c("NBHDNAME", "YEAR", model="within"))
 
-stargazer(model, type="latex")
+stargazer(model, type="text")
 
 # Export main regression results
 stargazer(model, type = "text", out = "test.txt")
@@ -2083,6 +2206,19 @@ print(test1 %>%
   n = 100)
 
 ####Clustering#####
+OWNER <- RC3 %>%
+  filter(PROPERTY_TYPE_GROUPING == 1) %>%
+  group_by(OWNERNAME_MASTER) %>%
+  summarise(first(OWNERNAME_MASTER)
+            
+            )
+test <- RC %>%
+  filter(PROPERTY_TYPE_GROUPING == 1)
+test %>%
+  group_by(MIXEDUSE) %>%
+  summarise(n(),
+            sum(UNITS_MASTER))
+  
 RC <- read.csv("Rent_Control.csv")
 
 RC2 <- read.csv("RC2.csv")
@@ -2217,8 +2353,6 @@ ClusterSumStats <- FCA_clustered %>%
     AGE = median(AGE, na.rm = TRUE)
   )
 
-
-
 ClusterSumStats <- RC3 %>%
   #st_drop_geometry() %>%
   group_by(NBHDNAME) %>%
@@ -2231,6 +2365,15 @@ ClusterSumStats <- RC3 %>%
     AGE = median(AgeOfBuilding, na.rm = TRUE))
 
 write.csv(ClusterSumStats, "ClusterSumStats.csv")
+
+# Sum stats
+ggplot(RC5) +
+  geom_sf(aes(fill = ShareRC)) +
+  scale_fill_viridis_c( na.value = "grey90") +
+  labs(fill = "% Rent Control",
+       title = "Rent Control Apartments Across DC") +
+  theme_minimal()
+
 
 #####COmbining with Costar#####
 
@@ -2254,3 +2397,43 @@ Costar_RC <- inner_join(Costar, APTRC, by = "SSL")
 
 
 RC9 <- left_join()
+
+#####BNB Map####
+# Convert Coordinates to CT
+options(digits = 20)
+BNBCOORD <- read.csv("BNBCOORD.csv")
+BNBCOORD<-BNBCOORD %>%
+  filter(Coordinates !="") %>%
+  separate(Coordinates, into = c("X", "Y"), sep = ",", convert = TRUE)
+
+# 1. Get DC tracts, pick a CRS
+tracts_dc <- tracts(state = "DC", year = 2024, cb = TRUE)
+
+# 2. Make points from BNBCOORD
+# assuming BNBCOORD$X = longitude, BNBCOORD$Y = latitude (WGS84)
+points_sf <- st_as_sf(BNBCOORD,
+                      coords = c("X", "Y"),
+                      crs = 4326)              # lon/lat
+
+# 3. Reproject points to match tracts
+points_sf <- st_transform(points_sf, st_crs(tracts_dc))
+
+# 4. Spatial join: points first, tracts second
+points_with_tract <- st_join(points_sf, tracts_dc, join = st_within)
+
+# drop geometry so count doesn't try to union points
+tract_counts <- points_with_tract %>%
+  st_drop_geometry() %>%
+  count(GEOID, name = "bnb_n")   # bnb_n = number of observations per tract
+
+tracts_dc_counts <- tracts_dc %>%
+  left_join(tract_counts, by = "GEOID") %>%
+  replace_na(list(bnb_n = 0))   # tracts with no listings → 0
+
+ggplot(tracts_dc_counts) +
+  geom_sf(aes(fill = bnb_n)) +
+  scale_fill_viridis_c(na.value = "grey90") +
+  labs(fill = "# of listings",
+       title = "BNB listings per census tract") +
+  theme_minimal()
+

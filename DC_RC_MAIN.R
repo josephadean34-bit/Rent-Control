@@ -512,7 +512,6 @@ RC1Points <- st_join(points_sf, tracts_DC, join = st_within)
 
 #####RC3Polygon#########
 
-# Most efficient for your use case
 fast_address_standardize <- function(addresses) {
   # Convert to uppercase and normalize spaces
   addresses <- toupper(addresses)
@@ -663,7 +662,6 @@ RC3Polygons <- RC2 %>%
 
 
 ##### RC3Points ########
-# Most efficient for your use case
 fast_address_standardize <- function(addresses) {
   # Convert to uppercase and normalize spaces
   addresses <- toupper(addresses)
@@ -1426,3 +1424,4 @@ ggplot(RCGEO1) + geom_sf(aes(fill = Density)) +
 
 write.csv(merge2 , "Rent_Control.csv")
 write.csv(RC3Polygons, "Rent_Control_Altos.csv")
+

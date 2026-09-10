@@ -1,6 +1,6 @@
  **Creating a Dataset of Rent Control Properties in Washington, DC AND Rent Analysis**
 
-This project supporting a research project focused on examining the impact of rent control of the Washington, DC rental market.
+This project supported a research project focused on examining the impact of rent control of the Washington, DC rental market.
 It entailed using public data to create a dataset of all rental properties in the District. Using proprietary data from Altos and Costar to analysis study rent price dynamics.
 This repo contains the code needed to: 1) create the rental dataset, 2) the combined rental price and rental property dataset and 3) run regressions.
 ___ file contains links to where the datasets can obtained

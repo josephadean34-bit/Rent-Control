@@ -5,11 +5,11 @@ This project supported a research project focused on examining the impact of ren
 No public dataset flags which properties in Washington, DC are subject to rent
 stabilization. The Rental Housing Act of 1985 defines coverage through a
 combination of construction date, ownership structure, subsidy status, and tax
-treatment — none of which appears as a single field in any one source.
+treatment, none of which appears as a single field in any one source.
 
 This project reconstructs that eligibility test from nine public records datasets to
 build a parcel-level rent control flag for the entire District, merges the result
-with proprietary listing-level rent data from Altos Research, and estimates the
+with proprietary listinglevel rent data from Altos Research, and estimates the
 rent differential using a two-way fixed effects hedonic model.
 
 **Rent-controlled apartment properties list at roughly 10–13% below comparable

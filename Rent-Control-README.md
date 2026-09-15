@@ -1,5 +1,7 @@
 # Rent Control in Washington, DC: Building a Property-Level Dataset and Estimating the Rent Differential
 
+This project supported a research project focused on examining the impact of rent control of the Washington, DC
+
 No public dataset flags which properties in Washington, DC are subject to rent
 stabilization. The Rental Housing Act of 1985 defines coverage through a
 combination of construction date, ownership structure, subsidy status, and tax
